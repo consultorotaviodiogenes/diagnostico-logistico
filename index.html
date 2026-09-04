@@ -12,7 +12,7 @@
      ║  PASSO 1: Cole a URL do seu Google Apps Script aqui  ║
      ╚══════════════════════════════════════════════════════╝ -->
 <script>
-  const APPS_SCRIPT_URL = "COLE_AQUI_A_URL_DO_SEU_APPS_SCRIPT";
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbywZZMeYF2aqP4uxkmUXks2NqCQVvNnCU7ljK9kMVK9cFw6h10L0yxBXZ6f9yjRy2CKSg/exec";
 </script>
 
 <style>
@@ -86,11 +86,11 @@ button { cursor: pointer; font-family: inherit; }
 }
 .hero-inner { position: relative; max-width: 720px; margin: 0 auto; padding: 64px 24px 56px; }
 .eyebrow {
-  font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700;
-  letter-spacing: .22em; text-transform: uppercase; color: var(--accent); margin-bottom: 18px;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700;
+  letter-spacing: .18em; text-transform: uppercase; color: var(--accent); margin-bottom: 18px;
   display: flex; align-items: center; gap: 10px;
 }
-.eyebrow::before { content: ''; display: inline-block; width: 20px; height: 2px; background: var(--accent); }
+.eyebrow::before { display: none; }
 .hero-inner h1 { font-size: clamp(42px,7vw,76px); font-weight: 800; line-height: 1.0; text-transform: uppercase; letter-spacing: .02em; text-wrap: balance; margin-bottom: 22px; }
 .hero-inner h1 em { font-style: normal; color: var(--accent); }
 .hero-desc { color: var(--text-2); font-size: 15px; line-height: 1.75; max-width: 520px; }
@@ -575,7 +575,7 @@ function renderResults() {
 
 /* ─── ENVIO PARA GOOGLE SHEETS ─── */
 function submitToSheets() {
-  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === 'COLE_AQUI_A_URL_DO_SEU_APPS_SCRIPT') return;
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbywZZMeYF2aqP4uxkmUXks2NqCQVvNnCU7ljK9kMVK9cFw6h10L0yxBXZ6f9yjRy2CKSg/exec') return;
   const total = QUESTIONS.reduce((s,q)=>s+(answers[q.id]||0),0);
   const catScores = CATS.map((_,ci)=>QUESTIONS.filter(q=>q.cat===ci).reduce((s,q)=>s+(answers[q.id]||0),0));
   let mat;
