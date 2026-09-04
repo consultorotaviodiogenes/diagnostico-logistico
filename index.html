@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diagnóstico Logístico</title>
+<meta name="description" content="Descubra os gargalos da sua operação logística em menos de 5 minutos.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<!-- ╔══════════════════════════════════════════════════════╗
+     ║  PASSO 1: Cole a URL do seu Google Apps Script aqui  ║
+     ╚══════════════════════════════════════════════════════╝ -->
+<script>
+  const APPS_SCRIPT_URL = "COLE_AQUI_A_URL_DO_SEU_APPS_SCRIPT";
+</script>
+
+<style>
+/* ─── TOKENS ─── */
+:root {
+  --bg:        #ECF1F8;
+  --surface:   #FFFFFF;
+  --card:      #FFFFFF;
+  --border:    #D2DCE9;
+  --border-hi: #A8BDD6;
+  --text:      #0C1824;
+  --text-2:    #4A627E;
+  --text-3:    #8AA3BE;
+  --accent:    #D4820A;
+  --accent-bg: #FEF3DC;
+  --success:   #0C9E87;
+  --warn:      #C87800;
+  --danger:    #C03535;
+  --grid-line: rgba(10,30,60,.07);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:        #080E18;
+    --surface:   #0D1B2A;
+    --card:      #152232;
+    --border:    #1C3048;
+    --border-hi: #2D4F72;
+    --text:      #DAE6F2;
+    --text-2:    #7AA4C4;
+    --text-3:    #3B5878;
+    --accent:    #F5A623;
+    --accent-bg: #1E1100;
+    --success:   #2DCFB3;
+    --warn:      #F5A623;
+    --danger:    #E05353;
+    --grid-line: rgba(255,255,255,.035);
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 16px; line-height: 1.6; min-height: 100vh; }
+h1,h2,h3,h4 { font-family: 'Barlow Condensed', sans-serif; }
+button { cursor: pointer; font-family: inherit; }
+
+/* ─── PROGRESS ─── */
+.progress-rail { position: fixed; top: 0; left: 0; right: 0; height: 3px; background: var(--border); z-index: 200; }
+.progress-fill { height: 100%; background: var(--accent); transition: width .5s cubic-bezier(.4,0,.2,1); width: 0%; }
+
+/* ─── NAV ─── */
+.topnav {
+  position: fixed; top: 3px; left: 0; right: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 32px; height: 56px;
+  background: var(--surface); border-bottom: 1px solid var(--border); z-index: 100;
+}
+.logo { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+.logo span { color: var(--accent); }
+.step-ind { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-3); letter-spacing: .08em; }
+
+/* ─── MAIN ─── */
+.main { padding-top: 59px; }
+.step { display: none; }
+.step.active { display: block; }
+
+/* ─── HERO ─── */
+.hero-wrap { position: relative; overflow: hidden; background: var(--surface); border-bottom: 1px solid var(--border); }
+.hero-grid {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image: linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+.hero-inner { position: relative; max-width: 720px; margin: 0 auto; padding: 64px 24px 56px; }
+.eyebrow {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: .22em; text-transform: uppercase; color: var(--accent); margin-bottom: 18px;
+  display: flex; align-items: center; gap: 10px;
+}
+.eyebrow::before { content: ''; display: inline-block; width: 20px; height: 2px; background: var(--accent); }
+.hero-inner h1 { font-size: clamp(42px,7vw,76px); font-weight: 800; line-height: 1.0; text-transform: uppercase; letter-spacing: .02em; text-wrap: balance; margin-bottom: 22px; }
+.hero-inner h1 em { font-style: normal; color: var(--accent); }
+.hero-desc { color: var(--text-2); font-size: 15px; line-height: 1.75; max-width: 520px; }
+.hero-meta { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 28px; }
+.meta-item { display: flex; align-items: center; gap: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--text-3); }
+.meta-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+
+/* ─── FORM SECTION ─── */
+.form-section { max-width: 720px; margin: 0 auto; padding: 40px 24px 64px; }
+.section-title {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: .18em; text-transform: uppercase; color: var(--text-3); margin-bottom: 18px;
+  display: flex; align-items: center; gap: 12px;
+}
+.section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+.form-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 28px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-grid .full { grid-column: 1 / -1; }
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--text-2); }
+.field input, .field select {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+  padding: 10px 14px; font-family: 'IBM Plex Sans', sans-serif; font-size: 15px; color: var(--text);
+  outline: none; transition: border-color .15s, box-shadow .15s; width: 100%;
+}
+.field input::placeholder { color: var(--text-3); }
+.field input:focus, .field select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(212,130,10,.12); }
+.field input.err, .field select.err { border-color: var(--danger); }
+.field select {
+  appearance: none; cursor: pointer; padding-right: 36px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238AA3BE' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center;
+}
+
+.err-note { font-size: 13px; color: var(--danger); margin-top: 14px; display: none; padding: 10px 14px; background: rgba(192,53,53,.08); border: 1px solid rgba(192,53,53,.2); border-radius: 6px; }
+.err-note.show { display: block; }
+.disclaimer { font-size: 12px; color: var(--text-3); margin-top: 14px; display: flex; align-items: center; gap: 6px; }
+
+/* ─── QUESTIONS ─── */
+.questions-wrap { max-width: 760px; margin: 0 auto; padding: 36px 24px 80px; }
+.q-header { margin-bottom: 28px; }
+.q-header h2 { font-size: 32px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+.q-header p { color: var(--text-2); font-size: 14px; margin-top: 6px; }
+
+.cat-block { margin-bottom: 28px; }
+.cat-label {
+  display: flex; align-items: center; gap: 10px;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: .18em; text-transform: uppercase; color: var(--text-3); margin-bottom: 10px;
+}
+.cat-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+.q-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px 16px; margin-bottom: 10px; transition: border-color .2s; }
+.q-card.done { border-color: var(--border-hi); }
+.q-num { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--text-3); letter-spacing: .06em; margin-bottom: 6px; }
+.q-text { font-size: 14px; font-weight: 500; color: var(--text); line-height: 1.55; margin-bottom: 14px; }
+
+.rating-group { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.r-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 9px 4px 8px; border: 1.5px solid var(--border); border-radius: 7px;
+  background: var(--bg); color: var(--text-2); transition: all .14s;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.r-btn:hover { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
+.r-btn.sel { border-color: var(--accent); background: var(--accent); color: #0C1824; }
+.r-num { font-size: 17px; font-weight: 500; line-height: 1; }
+.r-lbl { font-family: 'Barlow Condensed', sans-serif; font-size: 9px; letter-spacing: .04em; text-transform: uppercase; line-height: 1.2; text-align: center; }
+
+/* ─── RESULTS ─── */
+.results-wrap { max-width: 760px; margin: 0 auto; padding: 36px 24px 80px; }
+.results-wrap h2 { font-size: 36px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 24px; }
+
+.score-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+  padding: 36px; display: grid; grid-template-columns: 1fr auto;
+  gap: 28px; align-items: start; margin-bottom: 20px;
+}
+.score-lbl { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+.score-name { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(26px,4vw,40px); font-weight: 800; text-transform: uppercase; color: var(--text); line-height: 1.1; margin-bottom: 10px; }
+.score-blurb { color: var(--text-2); font-size: 14px; line-height: 1.65; max-width: 420px; }
+.score-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px; border-radius: 100px; font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-top: 14px; }
+.badge-crit { background: rgba(192,53,53,.12); color: var(--danger); }
+.badge-dev  { background: rgba(200,120,0,.12); color: var(--warn); }
+.badge-func { background: rgba(60,160,80,.12); color: #3CA050; }
+.badge-high { background: rgba(45,207,179,.12); color: var(--success); }
+
+.score-dial { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 100px; }
+.dial-number { font-family: 'IBM Plex Mono', monospace; font-size: 64px; font-weight: 500; line-height: 1; font-variant-numeric: tabular-nums; }
+.dial-max { font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: var(--text-3); }
+.dial-ring { width: 80px; height: 6px; background: var(--border); border-radius: 100px; overflow: hidden; margin-top: 6px; }
+.dial-ring-fill { height: 100%; border-radius: 100px; transition: width 1.2s cubic-bezier(.4,0,.2,1); }
+
+.cat-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 26px 28px; margin-bottom: 16px; }
+.cat-card h3 { font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--text); margin-bottom: 18px; }
+.cat-row { display: grid; grid-template-columns: 180px 1fr 36px; align-items: center; gap: 12px; margin-bottom: 12px; }
+.cat-row:last-child { margin-bottom: 0; }
+.cat-name { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--text-2); }
+.bar-bg { height: 8px; background: var(--bg); border-radius: 100px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 100px; width: 0%; transition: width 1.1s cubic-bezier(.4,0,.2,1); }
+.bar-val { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--text-3); text-align: right; font-variant-numeric: tabular-nums; }
+
+.recs-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 26px 28px; margin-bottom: 20px; }
+.recs-card h3 { font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--text); margin-bottom: 18px; }
+.rec-item { display: flex; gap: 14px; padding: 14px 0; border-top: 1px solid var(--border); }
+.rec-item:first-of-type { border-top: none; padding-top: 0; }
+.rec-icon { width: 34px; height: 34px; border-radius: 8px; background: var(--accent-bg); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.rec-body h4 { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text); margin-bottom: 3px; }
+.rec-body p { font-size: 13px; color: var(--text-2); line-height: 1.55; }
+
+/* ─── THANK YOU ─── */
+.thankyou-wrap { max-width: 600px; margin: 0 auto; padding: 80px 24px; text-align: center; }
+.thankyou-icon { font-size: 56px; margin-bottom: 24px; }
+.thankyou-wrap h2 { font-size: 40px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 12px; }
+.thankyou-wrap p { font-size: 15px; color: var(--text-2); line-height: 1.7; }
+
+/* ─── BTN ─── */
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 13px 28px; border-radius: 8px; font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; border: none; transition: all .15s; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { filter: brightness(1.12); transform: translateY(-1px); }
+.btn-primary:active { transform: translateY(0); }
+.btn-ghost { background: transparent; color: var(--text-2); border: 1px solid var(--border); }
+.btn-ghost:hover { border-color: var(--border-hi); color: var(--text); }
+.btn-row { display: flex; gap: 12px; align-items: center; justify-content: space-between; margin-top: 24px; }
+.btn-row-end { justify-content: flex-end; }
+
+/* ─── SENDING OVERLAY ─── */
+.sending-overlay {
+  position: fixed; inset: 0; z-index: 999;
+  background: rgba(8,14,24,.7); backdrop-filter: blur(4px);
+  display: none; align-items: center; justify-content: center;
+  flex-direction: column; gap: 16px;
+}
+.sending-overlay.show { display: flex; }
+.spinner { width: 40px; height: 40px; border: 3px solid var(--border-hi); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.sending-text { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #fff; }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 600px) {
+  .topnav { padding: 0 16px; }
+  .hero-inner { padding: 48px 16px 40px; }
+  .form-section { padding: 28px 16px 48px; }
+  .form-grid { grid-template-columns: 1fr; }
+  .questions-wrap, .results-wrap { padding: 28px 16px 64px; }
+  .score-card { grid-template-columns: 1fr; }
+  .dial-number { font-size: 48px; }
+  .cat-row { grid-template-columns: 1fr; gap: 4px; }
+  .bar-val { text-align: left; }
+}
+@media (max-width: 400px) { .r-lbl { display: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .bar-fill, .dial-ring-fill { transition: none; }
+  .spinner { animation: none; }
+  .btn-primary:hover { transform: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-rail"><div class="progress-fill" id="pFill"></div></div>
+
+<nav class="topnav">
+  <div class="logo">Diagnóstico <span>Logístico</span></div>
+  <div class="step-ind" id="stepInd">01 / 03</div>
+</nav>
+
+<!-- Hidden iframe + form for Google Sheets submission (no CORS issues) -->
+<iframe name="hiddenFrame" style="display:none;" id="hiddenFrame"></iframe>
+<form id="gForm" method="POST" target="hiddenFrame" style="display:none;">
+  <input type="hidden" name="nome">
+  <input type="hidden" name="empresa">
+  <input type="hidden" name="cargo">
+  <input type="hidden" name="email">
+  <input type="hidden" name="telefone">
+  <input type="hidden" name="segmento">
+  <input type="hidden" name="total">
+  <input type="hidden" name="maturidade">
+  <input type="hidden" name="q1"><input type="hidden" name="q2"><input type="hidden" name="q3">
+  <input type="hidden" name="q4"><input type="hidden" name="q5"><input type="hidden" name="q6">
+  <input type="hidden" name="q7"><input type="hidden" name="q8"><input type="hidden" name="q9">
+  <input type="hidden" name="q10">
+  <input type="hidden" name="cat1"><input type="hidden" name="cat2"><input type="hidden" name="cat3">
+  <input type="hidden" name="cat4"><input type="hidden" name="cat5">
+</form>
+
+<div class="sending-overlay" id="sendingOverlay">
+  <div class="spinner"></div>
+  <div class="sending-text">Enviando diagnóstico…</div>
+</div>
+
+<div class="main">
+
+<!-- ══ STEP 1 — CONTATO ══ -->
+<div class="step active" id="step-1">
+  <div class="hero-wrap">
+    <div class="hero-grid"></div>
+    <div class="hero-inner">
+      <div class="eyebrow">Diagnóstico Logístico</div>
+      <h1>Onde está o <em>gargalo</em> da sua operação?</h1>
+      <p class="hero-desc">10 perguntas, 4 minutos, resultado na hora. Você vai saber exatamente onde a sua logística está perdendo dinheiro e o que priorizar primeiro.</p>
+      <div class="hero-meta">
+        <div class="meta-item"><div class="meta-dot"></div>10 perguntas</div>
+        <div class="meta-item"><div class="meta-dot"></div>Cerca de 4 minutos</div>
+        <div class="meta-item"><div class="meta-dot"></div>5 áreas avaliadas</div>
+        <div class="meta-item"><div class="meta-dot"></div>Resultado imediato</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <div class="section-title">Identificação</div>
+    <div class="form-card">
+      <div class="form-grid">
+        <div class="field full"><label>Nome completo *</label><input type="text" id="f-name" placeholder="Seu nome completo" autocomplete="name"></div>
+        <div class="field"><label>Empresa *</label><input type="text" id="f-company" placeholder="Nome da empresa" autocomplete="organization"></div>
+        <div class="field"><label>Cargo *</label><input type="text" id="f-role" placeholder="Ex: Gerente de Logística" autocomplete="organization-title"></div>
+        <div class="field"><label>E-mail *</label><input type="email" id="f-email" placeholder="seu@email.com" autocomplete="email"></div>
+        <div class="field"><label>Telefone *</label><input type="tel" id="f-phone" placeholder="(11) 99999-9999" autocomplete="tel"></div>
+        <div class="field full">
+          <label>Ramo de atividade *</label>
+          <select id="f-segment">
+            <option value="" disabled selected>Selecione o segmento da empresa</option>
+            <option>E-commerce</option>
+            <option>Varejo &amp; Distribuição</option>
+            <option>Indústria &amp; Manufatura</option>
+            <option>Alimentos &amp; Bebidas</option>
+            <option>Farmacêutico &amp; Saúde</option>
+            <option>Automotivo</option>
+            <option>Agronegócio</option>
+            <option>Construção &amp; Materiais</option>
+            <option>Transporte &amp; Logística</option>
+            <option>Tecnologia</option>
+            <option>Serviços</option>
+            <option>Outro</option>
+          </select>
+        </div>
+      </div>
+      <div class="err-note" id="errContact">Preencha todos os campos antes de continuar.</div>
+      <div class="disclaimer">
+        <svg width="13" height="13" fill="none" viewBox="0 0 16 16"><path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-2.5a.75.75 0 0 1 .75.75v4a.75.75 0 0 1-1.5 0v-4A.75.75 0 0 1 8 5.5Zm0-2a1 1 0 1 1 0 2 1 1 0 0 1 0-2Z" fill="currentColor"/></svg>
+        Seus dados são utilizados apenas para envio do diagnóstico.
+      </div>
+    </div>
+    <div class="btn-row btn-row-end">
+      <button class="btn btn-primary" onclick="goStep2()">
+        Iniciar diagnóstico
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 8h12M9 3l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ STEP 2 — PERGUNTAS ══ -->
+<div class="step" id="step-2">
+  <div class="questions-wrap">
+    <div class="q-header">
+      <div class="eyebrow">Avaliação</div>
+      <h2>As 5 dimensões da operação</h2>
+      <p>Para cada pergunta, escolha a nota que melhor representa a realidade da sua empresa hoje. Seja honesto, o diagnóstico só é útil se refletir o que está acontecendo de fato.</p>
+    </div>
+    <div id="questionsContainer"></div>
+    <div class="err-note" id="errQuestions">Responda todas as perguntas antes de continuar.</div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goStep(1)">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M14 8H2M7 3L2 8l5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Voltar
+      </button>
+      <button class="btn btn-primary" onclick="goStep3()">
+        Ver diagnóstico
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 8h12M9 3l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ STEP 3 — RESULTADO ══ -->
+<div class="step" id="step-3">
+  <div class="results-wrap">
+    <div class="eyebrow">Resultado</div>
+    <h2>Diagnóstico da operação</h2>
+    <div id="resultsContainer"></div>
+  <div id="ctaBlock" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:36px;margin-top:20px;display:flex;gap:32px;align-items:center;flex-wrap:wrap;">
+    <div style="flex:1;min-width:240px;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:10px;">Próximo passo</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;text-transform:uppercase;letter-spacing:.02em;color:var(--text);line-height:1.1;margin-bottom:12px;">Essas melhorias são possíveis. A gente pode construir isso junto.</div>
+      <p style="font-size:14px;color:var(--text-2);line-height:1.65;">Já dá pra ver onde estão as oportunidades. Se fizer sentido conversar sobre como evoluir esses pontos, é só chamar.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;min-width:200px;">
+      <a href="https://wa.me/5551985658875?text=Fiz%20o%20diagn%C3%B3stico%20log%C3%ADstico%20e%20quero%20conversar%20sobre%20os%20resultados" target="_blank" style="text-decoration:none;">
+        <button class="btn btn-primary" style="width:100%;justify-content:center;">Falar com um consultor</button>
+      </a>
+      <button class="btn btn-ghost" style="width:100%;justify-content:center;" onclick="goStep(1);resetAll();">Responder de novo</button>
+    </div>
+  </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<script>
+/* ─── DADOS ─── */
+const CATS = [
+  { name:"Estoque & Inventário",       icon:"📦" },
+  { name:"Visibilidade & Tecnologia",  icon:"📡" },
+  { name:"Transporte & Distribuição",  icon:"🚚" },
+  { name:"Processos & Qualidade",      icon:"⚙️"  },
+  { name:"Gestão & Indicadores",       icon:"📊" },
+];
+const QUESTIONS = [
+  {id:1,cat:0,text:"Como você avalia a acuracidade do seu estoque? Contagens cíclicas, inventário rotativo e registro sistemático de divergências são práticas estabelecidas na operação?"},
+  {id:2,cat:0,text:"Sua empresa realiza planejamento e previsão de demanda com antecedência suficiente para evitar tanto rupturas de estoque quanto excesso de capital imobilizado?"},
+  {id:3,cat:1,text:"É possível rastrear pedidos e cargas em tempo real ao longo de toda a cadeia logística, do recebimento até a confirmação de entrega ao cliente final?"},
+  {id:4,cat:1,text:"Você utiliza sistemas integrados de gestão (WMS, TMS ou ERP) que centralizam as informações logísticas e eliminam a dependência de processos manuais e planilhas?"},
+  {id:5,cat:2,text:"Seu lead time de entrega é consistente e previsível? Atrasos e reentregas são eventos raros, mensuráveis e com causa-raiz identificada?"},
+  {id:6,cat:2,text:"A gestão de frota própria ou parceiros de transporte é eficiente em custo e nível de serviço? Há roteirização, avaliação periódica de desempenho e SLAs formalizados?"},
+  {id:7,cat:3,text:"Os processos de recebimento, separação (picking/packing) e expedição são ágeis, padronizados e executados com baixo índice de erros, avarias ou retrabalho?"},
+  {id:8,cat:3,text:"Sua operação consegue absorver picos de demanda (promoções, sazonalidade, crises) sem rupturas significativas, atrasos ou perda de qualidade?"},
+  {id:9,cat:4,text:"Você monitora regularmente KPIs logísticos (OTIF, custo por entrega, acuracidade de estoque, NPS de entrega) com metas definidas, periodicidade e planos de ação?"},
+  {id:10,cat:4,text:"Você tem visibilidade clara e atualizada dos custos logísticos por operação, rota ou canal de venda? É possível identificar ineficiências e quantificar oportunidades de redução?"},
+];
+const LABELS = ["Crítico","Fraco","Regular","Bom","Excelente"];
+const RECS = [
+  {icon:"📦",title:"Estoque & Inventário",
+   low:"Estoque fora de controle começa com divergência de sistema e termina em cliente insatisfeito. Nos projetos que conduzimos, a acuracidade sobe para acima de 96% em menos de 90 dias com o processo certo. Se quiser entender como isso funciona, podemos conversar.",
+   high:"Estoque controlado é raro. O próximo passo costuma estar na previsão de demanda: reduzir capital parado sem criar ruptura exige modelo e é uma das frentes onde trabalhamos com mais resultado."},
+  {icon:"📡",title:"Visibilidade & Tecnologia",
+   low:"A maioria das empresas que atendemos não precisa de sistema novo, precisa usar melhor o que já tem. Quando mapeamos o fluxo de informação, surgem três ou quatro pontos cegos causando retrabalho todo dia. Se não sabe onde a informação some, faz sentido a gente olhar isso juntos.",
+   high:"Tecnologia integrada é base difícil de construir e você já tem. O próximo passo é usar esses dados para antecipar problemas antes que cheguem ao cliente, não só reportar depois."},
+  {icon:"🚚",title:"Transporte & Distribuição",
+   low:"Transporte é onde o custo se esconde melhor. Em projetos de reestruturação de malha, é comum encontrar entre 15% e 25% de ineficiência que ninguém estava medindo. Se quiser um olhar externo nessa análise, estamos à disposição.",
+   high:"Distribuição eficiente é vantagem competitiva. A pergunta que fazemos para operações nesse estágio: sua malha foi desenhada para o volume que você tem hoje ou para o que quer ter em dois anos?"},
+  {icon:"⚙️",title:"Processos & Qualidade",
+   low:"Processo que depende de quem sabe de cor vai falhar quando essa pessoa sair. Padronizar recebimento e expedição costuma reduzir erros em mais de 40% nos primeiros meses. Não é só escrever um procedimento: é criar uma rotina que a equipe de fato segue.",
+   high:"Processos funcionando é o que permite crescer sem o caos crescer junto. A partir daqui, identificamos o que ainda depende de esforço manual e pode ser simplificado. É onde mais geramos resultado para quem já tem a base estruturada."},
+  {icon:"📊",title:"Gestão & Indicadores",
+   low:"Sem indicador, toda decisão é baseada em percepção. Os projetos de mais retorno rápido são os de gestão à vista: OTIF, custo por entrega e acuracidade de estoque já respondem o que um gestor precisa saber toda semana. Podemos ajudar a estruturar isso.",
+   high:"Indicadores funcionando é o que separa quem reage de quem antecipa. Para chegar no próximo nível, conectamos os KPIs da logística ao resultado financeiro do negócio. É onde atuamos com clientes que já têm a casa em ordem."},
+];
+
+const answers = {};
+
+/* ─── RENDER PERGUNTAS ─── */
+function renderQuestions() {
+  const c = document.getElementById('questionsContainer');
+  let html = '';
+  CATS.forEach((cat, ci) => {
+    const qs = QUESTIONS.filter(q => q.cat === ci);
+    html += `<div class="cat-block"><div class="cat-label"><span>${cat.icon}</span>${cat.name}</div>`;
+    qs.forEach(q => {
+      html += `<div class="q-card" id="qc-${q.id}">
+        <div class="q-num">PERGUNTA ${String(q.id).padStart(2,'0')}</div>
+        <div class="q-text">${q.text}</div>
+        <div class="rating-group">`;
+      for (let v=1;v<=5;v++) {
+        html += `<button class="r-btn" data-q="${q.id}" data-v="${v}" onclick="rate(${q.id},${v})">
+          <span class="r-num">${v}</span><span class="r-lbl">${LABELS[v-1]}</span>
+        </button>`;
+      }
+      html += `</div></div>`;
+    });
+    html += `</div>`;
+  });
+  c.innerHTML = html;
+}
+
+function rate(qId, val) {
+  answers[qId] = val;
+  document.querySelectorAll(`[data-q="${qId}"]`).forEach(b => b.classList.toggle('sel', +b.dataset.v === val));
+  document.getElementById('qc-'+qId).classList.add('done');
+}
+
+/* ─── NAVEGAÇÃO ─── */
+function goStep(n) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById('step-'+n).classList.add('active');
+  const pcts = {1:8, 2:50, 3:100};
+  document.getElementById('pFill').style.width = (pcts[n]||0)+'%';
+  document.getElementById('stepInd').textContent = `0${n} / 03`;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function goStep2() {
+  const fields = ['f-name','f-company','f-role','f-email','f-phone','f-segment'];
+  let ok = true;
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    const empty = !el.value.trim();
+    const emailErr = id==='f-email' && el.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(el.value);
+    el.classList.toggle('err', empty||emailErr);
+    if (empty||emailErr) ok = false;
+  });
+  document.getElementById('errContact').classList.toggle('show', !ok);
+  if (ok) goStep(2);
+}
+
+function goStep3() {
+  const missing = QUESTIONS.filter(q => !answers[q.id]);
+  if (missing.length > 0) {
+    const note = document.getElementById('errQuestions');
+    note.textContent = `Responda todas as perguntas antes de ver o resultado. (${missing.length} sem resposta)`;
+    note.classList.add('show');
+    document.getElementById('qc-'+missing[0].id).scrollIntoView({behavior:'smooth',block:'center'});
+    return;
+  }
+  document.getElementById('errQuestions').classList.remove('show');
+  renderResults();
+  submitToSheets();
+  goStep(3);
+}
+
+/* ─── RESULTADO ─── */
+function barColor(pct) {
+  if (pct<.4) return 'var(--danger)';
+  if (pct<.6) return 'var(--warn)';
+  if (pct<.8) return '#3CA050';
+  return 'var(--success)';
+}
+
+function renderResults() {
+  const total = QUESTIONS.reduce((s,q)=>s+(answers[q.id]||0),0);
+  const catScores = CATS.map((_,ci)=>QUESTIONS.filter(q=>q.cat===ci).reduce((s,q)=>s+(answers[q.id]||0),0));
+  const pct = total/50;
+
+  let mat, matC, blurb;
+  if (total<=20){mat="Operação em Risco";matC="badge-crit";blurb="Há problemas sérios em várias frentes ao mesmo tempo. Antes de pensar em crescer ou automatizar, é preciso resolver o básico: processo, visibilidade e controle.";}
+  else if (total<=30){mat="Em Estruturação";matC="badge-dev";blurb="A operação está no caminho certo, mas ainda tem gargalos que travam a eficiência. O foco precisa ser padronização e eliminar o que depende de pessoa-chave ou planilha.";}
+  else if (total<=40){mat="Operação Funcional";matC="badge-func";blurb="A logística roda bem no dia a dia. As oportunidades mais claras estão nos detalhes: reduzir custo por entrega, melhorar indicadores e preparar a operação para crescer.";}
+  else{mat="Alta Performance";matC="badge-high";blurb="Poucos chegam aqui. A operação é sólida, os números estão no controle e a equipe sabe o que está fazendo. O próximo passo é usar isso como vantagem competitiva de verdade.";}
+
+  const sorted = catScores.map((s,i)=>({i,s})).sort((a,b)=>a.s-b.s);
+  const weakest = sorted.slice(0,3).map(x=>x.i);
+  const name = document.getElementById('f-name').value.trim().split(' ')[0];
+
+  document.getElementById('resultsContainer').innerHTML = `
+    <div class="score-card">
+      <div>
+        <div class="score-lbl">Pontuação de ${name}</div>
+        <div class="score-name">${mat}</div>
+        <div class="score-blurb">${blurb}</div>
+        <div class="score-badge ${matC}">${mat}</div>
+      </div>
+      <div class="score-dial">
+        <div class="dial-number" style="color:${barColor(pct)}" id="dialNum">0</div>
+        <div class="dial-max">/ 50 pts</div>
+        <div class="dial-ring"><div class="dial-ring-fill" id="dialFill" style="background:${barColor(pct)}"></div></div>
+      </div>
+    </div>
+    <div class="cat-card">
+      <h3>Por área</h3>
+      ${catScores.map((s,i)=>`<div class="cat-row">
+        <div class="cat-name">${CATS[i].icon} ${CATS[i].name}</div>
+        <div class="bar-bg"><div class="bar-fill" id="bar-${i}" style="background:${barColor(s/10)}"></div></div>
+        <div class="bar-val">${s}/10</div>
+      </div>`).join('')}
+    </div>
+    <div class="recs-card">
+      <h3>Como resolver isso na prática</h3>
+      ${weakest.map(ci=>{
+        const r=RECS[ci]; const low=catScores[ci]<=6;
+        return `<div class="rec-item"><div class="rec-icon">${r.icon}</div><div class="rec-body"><h4>${r.title}</h4><p>${low?r.low:r.high}</p></div></div>`;
+      }).join('')}
+    </div>`;
+
+  requestAnimationFrame(()=>{
+    setTimeout(()=>{
+      let t0=performance.now(), dur=1200;
+      (function tick(now){
+        const p=Math.min((now-t0)/dur,1), e=1-Math.pow(1-p,3);
+        document.getElementById('dialNum').textContent=Math.round(e*total);
+        if(p<1) requestAnimationFrame(tick);
+      })(t0);
+      document.getElementById('dialFill').style.width=(pct*100)+'%';
+      CATS.forEach((_,i)=>{
+        const el=document.getElementById('bar-'+i);
+        if(el) el.style.width=((catScores[i]/10)*100)+'%';
+      });
+    },120);
+  });
+}
+
+/* ─── ENVIO PARA GOOGLE SHEETS ─── */
+function submitToSheets() {
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === 'COLE_AQUI_A_URL_DO_SEU_APPS_SCRIPT') return;
+  const total = QUESTIONS.reduce((s,q)=>s+(answers[q.id]||0),0);
+  const catScores = CATS.map((_,ci)=>QUESTIONS.filter(q=>q.cat===ci).reduce((s,q)=>s+(answers[q.id]||0),0));
+  let mat;
+  if(total<=20) mat="Operação em Risco";
+  else if(total<=30) mat="Em Estruturação";
+  else if(total<=40) mat="Operação Funcional";
+  else mat="Alta Performance";
+
+  const form = document.getElementById('gForm');
+  form.action = APPS_SCRIPT_URL;
+  const set = (name, val) => { form.querySelector(`[name="${name}"]`).value = val; };
+  set('nome', document.getElementById('f-name').value.trim());
+  set('empresa', document.getElementById('f-company').value.trim());
+  set('cargo', document.getElementById('f-role').value.trim());
+  set('email', document.getElementById('f-email').value.trim());
+  set('telefone', document.getElementById('f-phone').value.trim());
+  set('segmento', document.getElementById('f-segment').value);
+  set('total', total);
+  set('maturidade', mat);
+  QUESTIONS.forEach(q => set('q'+q.id, answers[q.id]||0));
+  catScores.forEach((s,i) => set('cat'+(i+1), s));
+  form.submit();
+}
+
+function resetAll() {
+  Object.keys(answers).forEach(k=>delete answers[k]);
+  ['f-name','f-company','f-role','f-email','f-phone','f-segment'].forEach(id=>{
+    const el=document.getElementById(id); el.value=''; el.classList.remove('err');
+  });
+  renderQuestions();
+}
+
+renderQuestions();
+</script>
+</body>
+</html>
