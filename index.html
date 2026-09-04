@@ -12,7 +12,7 @@
      ║  PASSO 1: Cole a URL do seu Google Apps Script aqui  ║
      ╚══════════════════════════════════════════════════════╝ -->
 <script>
-  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbywZZMeYF2aqP4uxkmUXks2NqCQVvNnCU7ljK9kMVK9cFw6h10L0yxBXZ6f9yjRy2CKSg/exec";
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyxE7l3F_z4xlum0NDJ1sKase1okIQohOq9U5pkw1zOgwrCw0yYKFIdNnHBk4N0OW9UQw/exec";
 </script>
 
 <style>
@@ -575,7 +575,7 @@ function renderResults() {
 
 /* ─── ENVIO PARA GOOGLE SHEETS ─── */
 function submitToSheets() {
-  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbywZZMeYF2aqP4uxkmUXks2NqCQVvNnCU7ljK9kMVK9cFw6h10L0yxBXZ6f9yjRy2CKSg/exec') return;
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbyxE7l3F_z4xlum0NDJ1sKase1okIQohOq9U5pkw1zOgwrCw0yYKFIdNnHBk4N0OW9UQw/exec') return;
   const total = QUESTIONS.reduce((s,q)=>s+(answers[q.id]||0),0);
   const catScores = CATS.map((_,ci)=>QUESTIONS.filter(q=>q.cat===ci).reduce((s,q)=>s+(answers[q.id]||0),0));
   let mat;
